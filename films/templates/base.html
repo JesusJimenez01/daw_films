@@ -23,22 +23,58 @@
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
                 <span class="navbar-toggler-icon"></span>
             </button>
+
             <div class="collapse navbar-collapse" id="navbarContent">
                 <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                     <li class="nav-item">
                         <a class="nav-link {% block nav_home_active %}{% endblock %}" href="{% url 'index' %}">Inicio</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">NavWIP</a>
+                    {% if user.is_authenticated %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-list me-1"></i>Mis Listas
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-heart me-2"></i>Favoritos</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-bookmark me-2"></i>Watchlist</a></li>
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-star me-2"></i>Valoraciones</a></li>
+                        </ul>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#">NavWIP</a>
-                    </li>
+                    {% endif %}
                 </ul>
-                <form class="search-form d-flex" method="GET" action="{% url 'index' %}">
+
+                <form class="search-form d-flex me-2" method="GET" action="{% url 'index' %}">
                     <input class="form-control me-2" type="search" name="search" placeholder="Buscar películas..." value="{{ search_query|default:'' }}">
                     <button class="btn btn-outline-light" type="submit">Buscar</button>
                 </form>
+
+                <!-- Menú de usuario -->
+                <ul class="navbar-nav">
+                    {% if user.is_authenticated %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                            {% if user.profile.avatar %}
+                            <img src="{{ user.profile.avatar.url }}" alt="Avatar" class="rounded-circle me-1" style="width: 25px; height: 25px; object-fit: cover;">
+                            {% else %}
+                            <i class="fas fa-user-circle me-1"></i>
+                            {% endif %}
+                            {{ user.username }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li><a class="dropdown-item" href="{% url 'profile' %}"><i class="fas fa-user me-2"></i>Mi Perfil</a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión</a></li>
+                        </ul>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'login' %}"><i class="fas fa-sign-in-alt me-1"></i>Iniciar Sesión</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="btn btn-outline-light" href="{% url 'register' %}"><i class="fas fa-user-plus me-1"></i>Registrarse</a>
+                    </li>
+                    {% endif %}
+                </ul>
             </div>
         </div>
     </nav>
