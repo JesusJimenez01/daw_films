@@ -4,100 +4,144 @@
 {% block title %}PlaceholderName - Películas Populares{% endblock %}
 
 {% block content %}
-<!-- Main Content -->
-<div class="container py-4">
-    <!-- Header -->
-    <div class="row mb-4">
-        <div class="col">
-            {% if search_query %}
-                <h1 class="display-5">Resultados para: {{ search_query }}</h1>
-            {% else %}
-                <h1 class="display-5">Películas Populares</h1>
-            {% endif %}
-        </div>
-    </div>
-
-    <!-- Movies Grid -->
-    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
-        {% for movie in movies %}
+    <!-- Main Content -->
+    <div class="container py-4">
+        <!-- Header -->
+        <div class="row mb-4">
             <div class="col">
-                <div class="card movie-card h-100">
-                    {% if movie.poster_path %}
-                        <img src="https://image.tmdb.org/t/p/w500{{ movie.poster_path }}" class="card-img-top" alt="{{ movie.title }}">
-                    {% else %}
-                        <div class="bg-light d-flex justify-content-center align-items-center card-img-top">
-                            <i class="fas fa-film fa-3x text-secondary"></i>
-                        </div>
-                    {% endif %}
-                    <div class="card-body d-flex flex-column">
-                        <h5 class="card-title">{{ movie.title }}</h5>
-                        <div class="movie-date-rating mb-2">
-                            <small class="text-muted">{{ movie.release_date|slice:":4" }}</small>
-                            <div class="rating-stars">
-                                <small>{{ movie.rating_out_of_five }} <i class="fas fa-star"></i></small>
+                {% if search_query %}
+                    <h1 class="display-5">Resultados para: {{ search_query }}</h1>
+                {% else %}
+                    <h1 class="display-5">Películas Populares</h1>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Movies Grid -->
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+            {% for movie in movies %}
+                <div class="col">
+                    <div class="card movie-card h-100">
+                        {% if movie.poster_path %}
+                            <img src="https://image.tmdb.org/t/p/w500{{ movie.poster_path }}" class="card-img-top"
+                                 alt="{{ movie.title }}">
+                        {% else %}
+                            <div class="bg-light d-flex justify-content-center align-items-center card-img-top">
+                                <i class="fas fa-film fa-3x text-secondary"></i>
+                            </div>
+                        {% endif %}
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title">{{ movie.title }}</h5>
+                            <div class="movie-date-rating mb-2">
+                                <small class="text-muted">{{ movie.release_date|slice:":4" }}</small>
+                                <div class="rating-stars">
+                                    <small>{{ movie.rating_out_of_five }} <i class="fas fa-star"></i></small>
+                                </div>
+                            </div>
+                            <p class="card-text overview mb-3">{{ movie.overview|truncatechars:150 }}</p>
+
+                            <div class="d-flex justify-content-between align-items-center mt-auto">
+                                <a href="{% url 'movie_detail' movie.id %}" class="btn btn-outline-primary">Ver
+                                    detalles</a>
+
+                                {% if user.is_authenticated %}
+                                    <div class="d-flex">
+                                        <form method="post" action="
+
+
+                                                {% if movie.id in favorite_ids %}{% url 'remove_from_favorites' movie.id %}{% else %}{% url 'add_to_favorites' movie.id %}{% endif %}"
+                                              class="ms-2">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-link p-0 border-0"
+                                                    title="{% if movie.id in favorite_ids %}Eliminar de favoritos{% else %}Añadir a favoritos{% endif %}">
+                                                {% if movie.id in favorite_ids %}
+                                                    <i class="fas fa-heart text-danger"></i>  <!-- lleno -->
+                                                {% else %}
+                                                    <i class="far fa-heart text-secondary"></i>  <!-- vacío -->
+                                                {% endif %}
+                                            </button>
+                                        </form>
+                                        <form method="post" action="
+                                                {% if movie.id in watchlist_ids %}{% url 'remove_from_watchlist' movie.id %}{% else %}{% url 'add_to_watchlist' movie.id %}{% endif %}"
+                                              class="ms-2">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-link p-0 border-0"
+                                                    title="{% if movie.id in watchlist_ids %}Eliminar de watchlist{% else %}Añadir a watchlist{% endif %}">
+                                                {% if movie.id in watchlist_ids %}
+                                                    <i class="fas fa-bookmark text-warning"></i>
+                                                    <!-- lleno -->
+                                                {% else %}
+                                                    <i class="far fa-bookmark text-secondary"></i>  <!-- vacío -->
+                                                {% endif %}
+                                            </button>
+                                        </form>
+                                    </div>
+                                {% endif %}
                             </div>
                         </div>
-                        <p class="card-text overview mb-3">{{ movie.overview|truncatechars:150 }}</p>
-                        <a href="{% url 'movie_detail' movie.id %}" class="btn btn-outline-primary mt-auto">Ver detalles</a>
                     </div>
                 </div>
-            </div>
-        {% empty %}
-            <div class="col-12 text-center py-5">
-                <i class="fas fa-search fa-3x mb-3 text-secondary"></i>
-                <h3>No se encontraron películas</h3>
-                <p>Intenta con otra búsqueda o explora las películas populares.</p>
-                <a href="{% url 'index' %}" class="btn btn-outline-primary">Ver películas populares</a>
-            </div>
-        {% endfor %}
-    </div>
-
-    <!-- Pagination -->
-    {% if movies %}
-        <div class="row mt-5">
-            <div class="col d-flex justify-content-center">
-                <nav aria-label="Page navigation">
-                    <ul class="pagination">
-                        <!-- Previous page -->
-                        {% if current_page > 1 %}
-                            <li class="page-item">
-                                <a class="page-link" href="?{% if search_query %}search={{ search_query }}&{% endif %}page={{ current_page|add:'-1' }}" aria-label="Previous">
-                                    <span aria-hidden="true">&laquo;</span>
-                                </a>
-                            </li>
-                        {% else %}
-                            <li class="page-item disabled">
-                                <a class="page-link" href="#" aria-label="Previous">
-                                    <span aria-hidden="true">&laquo;</span>
-                                </a>
-                            </li>
-                        {% endif %}
-
-                        <!-- Page numbers -->
-                        {% for page in page_range %}
-                            <li class="page-item {% if page == current_page %}active{% endif %}">
-                                <a class="page-link" href="?{% if search_query %}search={{ search_query }}&{% endif %}page={{ page }}">{{ page }}</a>
-                            </li>
-                        {% endfor %}
-
-                        <!-- Next page -->
-                        {% if current_page < total_pages %}
-                            <li class="page-item">
-                                <a class="page-link" href="?{% if search_query %}search={{ search_query }}&{% endif %}page={{ current_page|add:'1' }}" aria-label="Next">
-                                    <span aria-hidden="true">&raquo;</span>
-                                </a>
-                            </li>
-                        {% else %}
-                            <li class="page-item disabled">
-                                <a class="page-link" href="#" aria-label="Next">
-                                    <span aria-hidden="true">&raquo;</span>
-                                </a>
-                            </li>
-                        {% endif %}
-                    </ul>
-                </nav>
-            </div>
+            {% empty %}
+                <div class="col-12 text-center py-5">
+                    <i class="fas fa-search fa-3x mb-3 text-secondary"></i>
+                    <h3>No se encontraron películas</h3>
+                    <p>Intenta con otra búsqueda o explora las películas populares.</p>
+                    <a href="{% url 'index' %}" class="btn btn-outline-primary">Ver películas populares</a>
+                </div>
+            {% endfor %}
         </div>
-    {% endif %}
-</div>
+
+        <!-- Pagination -->
+        {% if movies %}
+            <div class="row mt-5">
+                <div class="col d-flex justify-content-center">
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination">
+                            <!-- Previous page -->
+                            {% if current_page > 1 %}
+                                <li class="page-item">
+                                    <a class="page-link"
+                                       href="?{% if search_query %}search={{ search_query }}&{% endif %}page={{ current_page|add:'-1' }}"
+                                       aria-label="Previous">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" aria-label="Previous">
+                                        <span aria-hidden="true">&laquo;</span>
+                                    </a>
+                                </li>
+                            {% endif %}
+
+                            <!-- Page numbers -->
+                            {% for page in page_range %}
+                                <li class="page-item {% if page == current_page %}active{% endif %}">
+                                    <a class="page-link"
+                                       href="?{% if search_query %}search={{ search_query }}&{% endif %}page={{ page }}">{{ page }}</a>
+                                </li>
+                            {% endfor %}
+
+                            <!-- Next page -->
+                            {% if current_page < total_pages %}
+                                <li class="page-item">
+                                    <a class="page-link"
+                                       href="?{% if search_query %}search={{ search_query }}&{% endif %}page={{ current_page|add:'1' }}"
+                                       aria-label="Next">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                            {% else %}
+                                <li class="page-item disabled">
+                                    <a class="page-link" href="#" aria-label="Next">
+                                        <span aria-hidden="true">&raquo;</span>
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        {% endif %}
+    </div>
 {% endblock %}
