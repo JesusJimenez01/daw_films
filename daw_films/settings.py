@@ -45,6 +45,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.humanize',
     'films',
+    'channels',
+    'chat',
 ]
 
 MIDDLEWARE = [
@@ -63,7 +65,7 @@ ROOT_URLCONF = 'daw_films.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'films/templates']
+        'DIRS': [BASE_DIR / 'films/../templates']
         ,
         'APP_DIRS': True,
         'OPTIONS': {
@@ -143,6 +145,9 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
 
 # Configuración de medios para avatares
 MEDIA_URL = '/media/'
@@ -166,4 +171,17 @@ MESSAGE_TAGS = {
     messages.SUCCESS: 'alert-success',
     messages.WARNING: 'alert-warning',
     messages.ERROR: 'alert-danger',
+}
+
+# Configuración ASGI para Channels
+ASGI_APPLICATION = 'daw_films.asgi.application'
+
+# Configuración de Channels
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [('redis', 6379)],
+        },
+    },
 }

@@ -17,6 +17,13 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{% static 'css/styles.css' %}">
     {% block extra_css %}{% endblock %}
+    <style>
+        body {
+            display: grid;
+            min-height: 100dvh;
+            grid-template-rows: auto 1fr auto;
+        }
+    </style>
 </head>
 <body>
 <!-- Navbar -->
@@ -51,6 +58,27 @@
                             </li>
                         </ul>
                     </li>
+
+                    <!-- Sección de Chat y Amigos -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle position-relative" href="#" id="chatDropdown" role="button"
+                           data-bs-toggle="dropdown">
+                            <i class="fas fa-comments me-1"></i>Chat
+                            <!-- Indicador de mensajes no leídos -->
+                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+                                  id="unread-messages-badge" style="display: none; font-size: 0.6em;">
+                        0
+                    </span>
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="chatDropdown">
+                            <li><a class="dropdown-item" href="{% url 'friends_list' %}">
+                                <i class="fas fa-users me-2"></i>Mis Amigos
+                            </a></li>
+                            <li><a class="dropdown-item" href="{% url 'search_users' %}">
+                                <i class="fas fa-user-plus me-2"></i>Buscar Amigos
+                            </a></li>
+                        </ul>
+                    </li>
                 {% endif %}
             </ul>
 
@@ -77,6 +105,9 @@
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                             <li><a class="dropdown-item" href="{% url 'profile' %}"><i class="fas fa-user me-2"></i>Mi
                                 Perfil</a></li>
+                            <li><a class="dropdown-item" href="{% url 'friends_list' %}">
+                                <i class="fas fa-users me-2"></i>Mis Amigos
+                            </a></li>
                             <li>
                                 <hr class="dropdown-divider">
                             </li>
@@ -97,9 +128,9 @@
 </nav>
 
 <!-- Sistema de mensajes -->
-<div class="messages-container">
-    <div class="container mt-3">
-        {% if messages %}
+{% if messages %}
+    <div class="messages-container">
+        <div class="container mt-3">
             {% for message in messages %}
                 <div class="alert {% if message.tags == 'error' %}danger{% elif message.tags == 'info' %}info{% elif message.tags == 'warning' %}warning{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show shadow-sm"
                      role="alert">
@@ -116,14 +147,16 @@
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             {% endfor %}
-        {% endif %}
+        </div>
     </div>
-</div>
+{% endif %}
 
-{% block content %}{% endblock %}
+<main>
+    {% block content %}{% endblock %}
+</main>
 
 <!-- Footer -->
-<footer class="bg-dark text-white py-4 mt-5">
+<footer class="bg-dark text-white py-4">
     <div class="container">
         <div class="row">
             <div class="col text-center">
@@ -155,6 +188,39 @@
                 bsAlert.close();
             }, 5000);
         });
+    });
+
+    document.addEventListener('DOMContentLoaded', function () {
+        // Función existente para cerrar alertas...
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(function (alert) {
+            setTimeout(function () {
+                const bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            }, 5000);
+        });
+
+        // Actualizar contador de mensajes no leídos
+        {% if user.is_authenticated %}
+            function updateUnreadCount() {
+                fetch('{% url "unread_messages_count" %}')
+                    .then(response => response.json())
+                    .then(data => {
+                        const badge = document.getElementById('unread-messages-badge');
+                        if (data.count > 0) {
+                            badge.textContent = data.count;
+                            badge.style.display = 'inline';
+                        } else {
+                            badge.style.display = 'none';
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
+            }
+
+            // Actualizar el contador cada 30 segundos
+            updateUnreadCount();
+            setInterval(updateUnreadCount, 30000);
+        {% endif %}
     });
 </script>
 

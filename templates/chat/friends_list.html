@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Mis Amigos{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Lista de amigos -->
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h4 class="card-title mb-0">
+                        <i class="fas fa-users me-2"></i>Mis Amigos ({{ friends|length }})
+                    </h4>
+                    <a href="{% url 'search_users' %}" class="btn btn-light btn-sm">
+                        <i class="fas fa-user-plus me-1"></i>Buscar Amigos
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if friends %}
+                    <div class="list-group list-group-flush">
+                        {% for friend in friends %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <img src="{{ friend.profile.avatar.url|default:'/media/profile_avatars/default.png' }}" />
+                                     class="rounded-circle me-3" style="width: 50px; height: 50px; object-fit: cover;" 
+                                     alt="{{ friend.username }}">
+                                <div>
+                                    <h6 class="mb-1">{{ friend.username }}</h6>
+                                    <small class="text-muted">{{ friend.first_name }} {{ friend.last_name }}</small>
+                                    {% if friend.profile.location %}
+                                    <br><small class="text-muted">
+                                        <i class="fas fa-map-marker-alt"></i> {{ friend.profile.location }}
+                                    </small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="d-flex align-items-center">
+                                {% if unread_counts.friend.id > 0 %}
+                                <span class="badge bg-danger me-2">{{ unread_counts.friend.id }}</span>
+                                {% endif %}
+                                
+                                <div class="btn-group">
+                                    <a href="{% url 'chat' friend.username %}" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-comments"></i> Chat
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" 
+                                            onclick="confirmRemoveFriend('{{ friend.username }}', '{% url 'remove_friend' friend.id %}')">
+                                        <i class="fas fa-user-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No tienes amigos aún</h5>
+                        <p class="text-muted">¡Busca y añade nuevos amigos para empezar a chatear!</p>
+                        <a href="{% url 'search_users' %}" class="btn btn-primary">
+                            <i class="fas fa-search me-2"></i>Buscar Amigos
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <!-- Solicitudes pendientes -->
+            {% if pending_requests %}
+            <div class="card">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-clock me-2"></i>Solicitudes Pendientes ({{ pending_requests|length }})
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        {% for request in pending_requests %}
+                        <div class="list-group-item px-0">
+                            <div class="d-flex align-items-center mb-2">
+                                <img src="{{ friend.profile.avatar.url|default:'/media/profile_avatars/default.png' }}"
+                                     class="rounded-circle me-3" style="width: 40px; height: 40px; object-fit: cover;" 
+                                     alt="{{ request.requester.username }}">
+                                <div>
+                                    <h6 class="mb-0">{{ request.requester.username }}</h6>
+                                    <small class="text-muted">{{ request.requester.first_name }} {{ request.requester.last_name }}</small>
+                                </div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'accept_friend_request' request.id %}" class="btn btn-sm btn-success flex-fill">
+                                    <i class="fas fa-check me-1"></i>Aceptar
+                                </a>
+                                <a href="{% url 'reject_friend_request' request.id %}" class="btn btn-sm btn-outline-danger flex-fill">
+                                    <i class="fas fa-times me-1"></i>Rechazar
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Estadísticas -->
+            <div class="card mt-3">
+                <div class="card-header bg-info text-white">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>Estadísticas
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h4 class="text-primary">{{ friends|length }}</h4>
+                            <small class="text-muted">Amigos</small>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="text-warning">{{ pending_requests|length }}</h4>
+                            <small class="text-muted">Solicitudes</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación para eliminar amigo -->
+<div class="modal fade" id="removeFriendModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Eliminar Amigo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                ¿Estás seguro de que quieres eliminar a <strong id="friendNameToRemove"></strong> de tu lista de amigos?
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <a href="#" id="confirmRemoveBtn" class="btn btn-danger">Eliminar</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmRemoveFriend(friendName, removeUrl) {
+    document.getElementById('friendNameToRemove').textContent = friendName;
+    document.getElementById('confirmRemoveBtn').href = removeUrl;
+    
+    const modal = new bootstrap.Modal(document.getElementById('removeFriendModal'));
+    modal.show();
+}
+</script>
+
+<style>
+.rounded-circle {
+    object-fit: cover;
+}
+</style>
+{% endblock %}
