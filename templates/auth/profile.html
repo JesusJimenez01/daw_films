@@ -1,0 +1,305 @@
+{% extends '../base.html' %}
+{% load static %}
+
+{% block title %}Mi Perfil - PlaceholderName{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/profile.css' %}">
+{% endblock %}
+
+{% block content %}
+    <div class="container mt-5">
+        <div class="row">
+            <!-- Información del perfil -->
+            <div class="col-md-4 mb-4">
+                <div class="card profile-card shadow-lg">
+                    <div class="card-header">
+                        <h4 class="mb-0"><i class="fas fa-user-circle me-2"></i>Mi Perfil</h4>
+                    </div>
+                    <div class="card-body text-center">
+                        <div class="profile-avatar">
+                            {% if user.profile.avatar %}
+                                <img src="{{ user.profile.avatar.url }}" alt="Avatar de {{ user.username }}"
+                                     class="img-fluid rounded-circle"
+                                     style="width: 150px; height: 150px; object-fit: cover;">
+                            {% else %}
+                                <img src="{{ MEDIA_URL }}profile_avatars/default.png" alt="Avatar por defecto"
+                                     class="img-fluid rounded-circle"
+                                     style="width: 150px; height: 150px; object-fit: cover;">
+                            {% endif %}
+                        </div>
+
+                        <h5 class="card-title mb-1 fw-bold">{{ user.get_full_name }}</h5>
+                        <p class="text-muted mb-3">@{{ user.username }}</p>
+
+                        {% if user.profile.bio %}
+                            <div class="mb-3">
+                                <p class="card-text">{{ user.profile.bio }}</p>
+                            </div>
+                        {% endif %}
+
+                        <div class="profile-stats">
+                            <span class="badge stat-badge">
+                                <i class="fas fa-heart me-1"></i>
+                                {{ user.favorites.count }} Favoritos
+                            </span>
+                            <span class="badge stat-badge">
+                                <i class="fas fa-star me-1"></i>
+                                {{ user.ratings.count }} Valoraciones
+                            </span>
+                        </div>
+
+                        {% if user.profile.location %}
+                            <div class="d-flex justify-content-center mt-3">
+                                <div class="location-info">
+                                    <i class="fas fa-map-marker-alt"></i>
+                                    {{ user.profile.location }}
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="card-footer">
+                        <div class="d-grid">
+                            <a href="{% url 'logout' %}" class="btn btn-logout">
+                                <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Formulario de edición de perfil -->
+            <div class="col-md-8">
+                <div class="card edit-form-card shadow-lg">
+                    <div class="card-header">
+                        <h4 class="mb-0"><i class="fas fa-edit me-2"></i>Editar Perfil</h4>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" enctype="multipart/form-data">
+                            {% csrf_token %}
+
+                            <div class="mb-4">
+                                <label for="{{ form.avatar.id_for_label }}" class="form-label">
+                                    <i class="fas fa-camera me-2"></i>Avatar
+                                </label>
+                                {{ form.avatar }}
+                                {% if form.avatar.errors %}
+                                    {% for error in form.avatar.errors %}
+                                        <div class="text-danger small mt-1">{{ error }}</div>
+                                    {% endfor %}
+                                {% endif %}
+                                <div class="form-text">Selecciona una imagen para tu avatar (máximo 5MB)</div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="{{ form.bio.id_for_label }}" class="form-label">
+                                    <i class="fas fa-pen me-2"></i>Biografía
+                                </label>
+                                {{ form.bio }}
+                                {% if form.bio.errors %}
+                                    {% for error in form.bio.errors %}
+                                        <div class="text-danger small mt-1">{{ error }}</div>
+                                    {% endfor %}
+                                {% endif %}
+                                <div class="form-text">Cuéntanos un poco sobre ti y tus gustos cinematográficos</div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-4">
+                                    <label for="{{ form.favorite_genres.id_for_label }}" class="form-label">
+                                        <i class="fas fa-theater-masks me-2"></i>Géneros favoritos
+                                    </label>
+                                    {{ form.favorite_genres }}
+                                    {% if form.favorite_genres.errors %}
+                                        {% for error in form.favorite_genres.errors %}
+                                            <div class="text-danger small mt-1">{{ error }}</div>
+                                        {% endfor %}
+                                    {% endif %}
+                                    <div class="form-text">Separa los géneros con comas (ej: Acción, Drama, Comedia)</div>
+                                </div>
+
+                                <div class="col-md-6 mb-4">
+                                    <label for="{{ form.date_of_birth.id_for_label }}" class="form-label">
+                                        <i class="fas fa-birthday-cake me-2"></i>Fecha de nacimiento
+                                    </label>
+                                    {{ form.date_of_birth }}
+                                    {% if form.date_of_birth.errors %}
+                                        {% for error in form.date_of_birth.errors %}
+                                            <div class="text-danger small mt-1">{{ error }}</div>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="{{ form.location.id_for_label }}" class="form-label">
+                                    <i class="fas fa-globe me-2"></i>Ubicación
+                                </label>
+                                {{ form.location }}
+                                {% if form.location.errors %}
+                                    {% for error in form.location.errors %}
+                                        <div class="text-danger small mt-1">{{ error }}</div>
+                                    {% endfor %}
+                                {% endif %}
+                                <div class="form-text">Tu ciudad o país (opcional)</div>
+                            </div>
+
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-save">
+                                    <i class="fas fa-save me-2"></i>Guardar Cambios
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección de listas del usuario (películas favoritas, por ver, etc.) -->
+        <div class="row mt-5">
+            <!-- Favoritos -->
+            <div class="col-md-6 mb-4">
+                <div class="card movie-list-card shadow-lg">
+                    <div class="card-header favorites-header d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0"><i class="fas fa-heart me-2"></i>Mis Favoritos</h4>
+                        <a href="#" class="btn btn-sm btn-view-all">Ver Todos</a>
+                    </div>
+                    <div class="card-body">
+                        {% if user.profile.favorites.all %}
+                            <div class="row row-cols-2 row-cols-lg-3 g-3">
+                                {% for favorite in user.profile.favorites.all|slice:":6" %}
+                                    <div class="col movie-grid-item">
+                                        <div class="card h-100">
+                                            {% if favorite.poster_path %}
+                                                <img src="https://image.tmdb.org/t/p/w300{{ favorite.poster_path }}"
+                                                     class="card-img-top" alt="{{ favorite.title }}">
+                                            {% else %}
+                                                <div class="bg-gradient-secondary text-white d-flex justify-content-center align-items-center"
+                                                     style="height: 200px;">
+                                                    <i class="fas fa-film fa-2x opacity-50"></i>
+                                                </div>
+                                            {% endif %}
+                                            <div class="card-body">
+                                                <h6 class="card-title text-center">{{ favorite.title }}</h6>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="empty-state">
+                                <i class="far fa-heart"></i>
+                                <p>No has añadido películas a tus favoritos aún.<br>
+                                <small>¡Explora nuestro catálogo y marca tus películas preferidas!</small></p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Watchlist -->
+            <div class="col-md-6 mb-4">
+                <div class="card movie-list-card shadow-lg">
+                    <div class="card-header watchlist-header d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0"><i class="fas fa-bookmark me-2"></i>Mi Watchlist</h4>
+                        <a href="#" class="btn btn-sm btn-view-all">Ver Todos</a>
+                    </div>
+                    <div class="card-body">
+                        {% if user.profile.watchlist.all %}
+                            <div class="row row-cols-2 row-cols-lg-3 g-3">
+                                {% for item in user.profile.watchlist.all|slice:":6" %}
+                                    <div class="col movie-grid-item">
+                                        <div class="card h-100">
+                                            {% if item.poster_path %}
+                                                <img src="https://image.tmdb.org/t/p/w300{{ item.poster_path }}"
+                                                     class="card-img-top" alt="{{ item.title }}">
+                                            {% else %}
+                                                <div class="bg-gradient-secondary text-white d-flex justify-content-center align-items-center"
+                                                     style="height: 200px;">
+                                                    <i class="fas fa-film fa-2x opacity-50"></i>
+                                                </div>
+                                            {% endif %}
+                                            <div class="card-body">
+                                                <h6 class="card-title text-center">{{ item.title }}</h6>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="empty-state">
+                                <i class="far fa-bookmark"></i>
+                                <p>Tu watchlist está vacía.<br>
+                                <small>¡Agrega películas que quieras ver más tarde!</small></p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        // Preview de imagen para cambio de avatar con animación mejorada
+        document.addEventListener('DOMContentLoaded', function () {
+            const avatarInput = document.getElementById('{{ form.avatar.id_for_label }}');
+            if (avatarInput) {
+                avatarInput.addEventListener('change', function () {
+                    if (this.files && this.files[0]) {
+                        const reader = new FileReader();
+                        reader.onload = function (e) {
+                            const profileImage = document.querySelector('.profile-avatar img');
+                            if (profileImage) {
+                                // Añadir efecto de transición suave
+                                profileImage.style.opacity = '0.5';
+                                profileImage.style.transform = 'scale(0.95)';
+
+                                setTimeout(() => {
+                                    profileImage.src = e.target.result;
+                                    profileImage.style.opacity = '1';
+                                    profileImage.style.transform = 'scale(1)';
+                                }, 150);
+                            }
+                        }
+                        reader.readAsDataURL(this.files[0]);
+                    }
+                });
+            }
+
+            // Animación para los elementos al hacer scroll
+            const observerOptions = {
+                threshold: 0.1,
+                rootMargin: '0px 0px -50px 0px'
+            };
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                    }
+                });
+            }, observerOptions);
+
+            // Observar las tarjetas de películas
+            document.querySelectorAll('.movie-grid-item').forEach(item => {
+                item.style.opacity = '0';
+                item.style.transform = 'translateY(20px)';
+                item.style.transition = 'all 0.5s ease';
+                observer.observe(item);
+            });
+
+            // Efecto hover mejorado para las estadísticas
+            document.querySelectorAll('.stat-badge').forEach(badge => {
+                badge.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-3px) scale(1.05)';
+                });
+                badge.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0) scale(1)';
+                });
+            });
+        });
+    </script>
+{% endblock %}

@@ -10,12 +10,13 @@ services:
       - media_volume:/app/media
     environment:
       - DEBUG=True
+      - DJANGO_SETTINGS_MODULE=daw_films.settings
     env_file:
       - .env
     depends_on:
       - db
-      - mailpit
-    command: gunicorn daw_films.wsgi:application --bind 0.0.0.0:8000
+      - redis
+    command: gunicorn daw_films.asgi:application --bind 0.0.0.0:8000 -k uvicorn.workers.UvicornWorker
     restart: unless-stopped
 
   nginx:
@@ -43,22 +44,15 @@ services:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
 
-  mailpit:
-    image: axllent/mailpit
-    container_name: mailpit
-    volumes:
-      - ./data:/data
+  redis:
+    image: redis:7
+    container_name: redis
     ports:
-      - "8025:8025" # Interfaz web
-      - "1025:1025" # SMTP de prueba
-    environment:
-      MP_MAX_MESSAGES: 5000
-      MP_DATABASE: /data/mailpit.db
-      MP_SMTP_AUTH_ACCEPT_ANY: 1
-      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+      - "6379:6379"
     restart: unless-stopped
 
 volumes:
   postgres_data:
   static_volume:
   media_volume:
+

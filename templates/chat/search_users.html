@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Buscar Amigos{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="card-title mb-0">
+                        <i class="fas fa-search me-2"></i>Buscar Nuevos Amigos
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="input-group mb-3">
+                            {{ form.query }}
+                            <button class="btn btn-primary" type="submit">
+                                <i class="fas fa-search"></i> Buscar
+                            </button>
+                        </div>
+                    </form>
+                    
+                    {% if users %}
+                    <h5 class="mt-4 mb-3">Resultados de la búsqueda:</h5>
+                    <div class="list-group">
+                        {% for user in users %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <img src="{{ friend.profile.avatar.url|default:'/media/profile_avatars/default.png' }}"
+                                     class="rounded-circle me-3" style="width: 50px; height: 50px;" alt="{{ user.username }}">
+                                <div>
+                                    <h6 class="mb-1">{{ user.username }}</h6>
+                                    <small class="text-muted">{{ user.first_name }} {{ user.last_name }}</small>
+                                    {% if user.profile.location %}
+                                    <br><small class="text-muted">
+                                        <i class="fas fa-map-marker-alt"></i> {{ user.profile.location }}
+                                    </small>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="btn-group">
+                                {% if friendship_status.user.id == 'friends' %}
+                                    <span class="badge bg-success p-2">
+                                        <i class="fas fa-check"></i> Ya son amigos
+                                    </span>
+                                    <a href="{% url 'chat' user.username %}" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-comments"></i> Chat
+                                    </a>
+                                {% elif friendship_status.user.id == 'pending_sent' %}
+                                    <span class="badge bg-warning p-2">
+                                        <i class="fas fa-clock"></i> Solicitud enviada
+                                    </span>
+                                {% elif friendship_status.user.id == 'pending_received' %}
+                                    <a href="{% url 'friends_list' %}" class="btn btn-sm btn-info">
+                                        <i class="fas fa-eye"></i> Ver solicitud
+                                    </a>
+                                {% else %}
+                                    <a href="{% url 'send_friend_request' user.id %}" class="btn btn-sm btn-success">
+                                        <i class="fas fa-user-plus"></i> Añadir amigo
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% elif request.method == 'POST' %}
+                    <div class="alert alert-info mt-4">
+                        <i class="fas fa-info-circle me-2"></i>
+                        No se encontraron usuarios que coincidan con tu búsqueda.
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    <a href="{% url 'friends_list' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>Volver a Mis Amigos
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.rounded-circle {
+    object-fit: cover;
+}
+
+.badge {
+    font-size: 0.8em;
+}
+</style>
+{% endblock %}

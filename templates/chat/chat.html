@@ -1,0 +1,415 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="{% static 'css/chat.css' %}">
+{% endblock %}
+
+{% block title %}Chat - PlaceholderName{% endblock %}
+
+{% block content %}
+<div class="chat-layout">
+    <!-- Lista de amigos -->
+    <aside class="friends-sidebar">
+        <div class="sidebar-header">
+            <h4><i class="fas fa-users"></i> Mis Amigos</h4>
+            <span class="friends-count">{{ all_friends|length }}</span>
+        </div>
+
+        <div class="friends-list">
+            {% for friend in all_friends %}
+            <div class="friend-item {% if friend.username == friend.username %}active{% endif %}"
+                 onclick="openChat('{{ friend.username }}')"
+                 data-friend="{{ friend.username }}">
+                <div class="friend-avatar-container">
+                    {% if friend.profile.avatar %}
+                        <img src="{{ friend.profile.avatar.url }}" class="friend-avatar" alt="{{ friend.username }}">
+                    {% else %}
+                        <div class="friend-avatar default-avatar">
+                            {{ friend.first_name|first|default:friend.username|first|upper }}
+                        </div>
+                    {% endif %}
+                    <div class="online-indicator"></div>
+                </div>
+
+                <div class="friend-info">
+                    <h6>{{ friend.get_full_name|default:friend.username }}</h6>
+                    <small class="last-message">Toca para chatear</small>
+                </div>
+
+                {% if friend.unread_count > 0 %}
+                <div class="unread-badge">{{ friend.unread_count }}</div>
+                {% endif %}
+            </div>
+            {% empty %}
+            <div class="no-friends">
+                <i class="fas fa-user-plus fa-2x"></i>
+                <p>No tienes amigos aún</p>
+                <a href="{% url 'search_users' %}" class="btn btn-primary btn-sm">Buscar amigos</a>
+            </div>
+            {% endfor %}
+        </div>
+    </aside>
+
+    <!-- Ventana de chat -->
+    <main class="chat-container">
+        {% if friend %}
+        <div class="chat-header">
+            <div class="chat-user-info">
+                <div class="chat-avatar-container">
+                    {% if friend.profile.avatar %}
+                        <img src="{{ friend.profile.avatar.url }}" class="chat-avatar" alt="{{ friend.username }}">
+                    {% else %}
+                        <div class="chat-avatar default-avatar">
+                            {{ friend.first_name|first|default:friend.username|first|upper }}
+                        </div>
+                    {% endif %}
+                    <div class="status-indicator online"></div>
+                </div>
+                <div class="user-details">
+                    <h5>{{ friend.get_full_name|default:friend.username }}</h5>
+                    <small class="user-status">En línea</small>
+                </div>
+            </div>
+            <div class="chat-actions">
+                <button class="btn-icon" title="Más opciones">
+                    <i class="fas fa-ellipsis-v"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="chat-messages" id="chat-messages">
+            {% for message in conversation %}
+            <div class="message-wrapper">
+                <div class="message {% if message.sender == request.user %}sent{% else %}received{% endif %}">
+                    {% if message.sender != request.user %}
+                        <div class="message-avatar">
+                            {% if message.sender.profile.avatar %}
+                                <img src="{{ message.sender.profile.avatar.url }}" alt="{{ message.sender.username }}">
+                            {% else %}
+                                <div class="avatar-placeholder">
+                                    {{ message.sender.first_name|first|default:message.sender.username|first|upper }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+
+                    <div class="message-content">
+                        <div class="message-text">{{ message.content|linebreaksbr }}</div>
+                        <div class="message-time">
+                            {{ message.timestamp|date:"H:i" }}
+                            {% if message.sender == request.user %}
+                                <i class="fas fa-check message-status"></i>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="empty-chat">
+                <i class="fas fa-comments fa-3x"></i>
+                <h5>¡Inicia la conversación!</h5>
+                <p>Envía tu primer mensaje a {{ friend.get_full_name|default:friend.username }}</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="typing-indicator" id="typing-indicator">
+            <div class="typing-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <span class="typing-text">{{ friend.username }} está escribiendo...</span>
+        </div>
+
+        <div class="chat-input-container">
+            <form id="message-form" class="message-form">
+                {% csrf_token %}
+                <div class="input-group">
+                    <div class="input-wrapper">
+                        <textarea
+                            id="message-input"
+                            name="content"
+                            placeholder="Escribe un mensaje..."
+                            rows="1"
+                            autocomplete="off"></textarea>
+                        <button type="button" id="emoji-btn" class="emoji-btn" title="Emojis">
+                            <i class="fas fa-smile"></i>
+                        </button>
+                    </div>
+                    <button type="submit" id="send-button" class="send-button" disabled>
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </form>
+
+            <div class="quick-messages">
+                <button type="button" class="quick-msg-btn" onclick="insertQuickMessage('¡Hola! ¿Cómo estás?')">
+                    👋 ¡Hola!
+                </button>
+                <button type="button" class="quick-msg-btn" onclick="insertQuickMessage('¿Qué tal tu día?')">
+                    😊 ¿Qué tal?
+                </button>
+                <button type="button" class="quick-msg-btn" onclick="insertQuickMessage('Nos vemos pronto 👋')">
+                    👋 Hasta luego
+                </button>
+            </div>
+        </div>
+        {% else %}
+        <div class="no-chat-selected">
+            <div class="welcome-message">
+                <i class="fas fa-comments fa-4x"></i>
+                <h3>Bienvenido al Chat</h3>
+                <p>Selecciona un amigo de la lista para comenzar a chatear</p>
+            </div>
+        </div>
+        {% endif %}
+    </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const messageInput = document.getElementById('message-input');
+    const sendButton = document.getElementById('send-button');
+    const chatMessages = document.getElementById('chat-messages');
+    const messageForm = document.getElementById('message-form');
+    const typingIndicator = document.getElementById('typing-indicator');
+
+    // Solo inicializar WebSocket si estamos en una página de chat específica
+    {% if friend %}
+    const friendUsername = "{{ friend.username }}";
+    let chatSocket = null;
+    let typingTimer = null;
+    let isTyping = false;
+
+    // Inicializar WebSocket
+    function initWebSocket() {
+        const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+        const wsUrl = `${protocol}://${window.location.host}/ws/chat/${friendUsername}/`;
+
+        chatSocket = new WebSocket(wsUrl);
+
+        chatSocket.onopen = function(e) {
+            console.log('WebSocket conectado');
+        };
+
+        chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            console.log('Mensaje recibido:', data);
+
+            if (data.type === 'chat_message') {
+                appendMessage(data);
+            } else if (data.type === 'typing') {
+                showTypingIndicator(data.typing);
+            }
+        };
+
+        chatSocket.onclose = function(e) {
+            console.log('WebSocket desconectado:', e);
+            // Intentar reconectar después de 3 segundos
+            setTimeout(initWebSocket, 3000);
+        };
+
+        chatSocket.onerror = function(e) {
+            console.error('Error en WebSocket:', e);
+        };
+    }
+
+    // Función para mostrar/ocultar indicador de escritura
+    function showTypingIndicator(isTyping) {
+        if (isTyping) {
+            typingIndicator.style.display = 'flex';
+            scrollToBottom();
+        } else {
+            typingIndicator.style.display = 'none';
+        }
+    }
+
+    // Función para enviar estado de escritura
+    function sendTypingStatus(typing) {
+        if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+            chatSocket.send(JSON.stringify({
+                'type': 'typing',
+                'typing': typing
+            }));
+        }
+    }
+
+    // Agregar mensaje al chat
+    function appendMessage(data) {
+        const messageWrapper = document.createElement('div');
+        messageWrapper.className = 'message-wrapper';
+
+        const isCurrentUser = data.username === "{{ request.user.username }}";
+        const avatarUrl = data.avatar_url || '';
+        const timestamp = new Date(data.timestamp).toLocaleTimeString('es-ES', {
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+        messageWrapper.innerHTML = `
+            <div class="message ${isCurrentUser ? 'sent' : 'received'}">
+                ${!isCurrentUser ? `
+                    <div class="message-avatar">
+                        ${avatarUrl ?
+                            `<img src="${avatarUrl}" alt="${data.username}">` :
+                            `<div class="avatar-placeholder">${data.username.charAt(0).toUpperCase()}</div>`
+                        }
+                    </div>
+                ` : ''}
+                <div class="message-content">
+                    <div class="message-text">${data.message.replace(/\n/g, '<br>')}</div>
+                    <div class="message-time">
+                        ${timestamp}
+                        ${isCurrentUser ? '<i class="fas fa-check message-status"></i>' : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+
+        chatMessages.appendChild(messageWrapper);
+        scrollToBottom();
+    }
+
+    // Scroll al final
+    function scrollToBottom() {
+        setTimeout(() => {
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }, 100);
+    }
+
+    // Auto-resize textarea
+    function autoResize() {
+        messageInput.style.height = 'auto';
+        messageInput.style.height = messageInput.scrollHeight + 'px';
+
+        // Habilitar/deshabilitar botón de envío
+        sendButton.disabled = !messageInput.value.trim();
+    }
+
+    // Event listeners
+    messageInput.addEventListener('input', function() {
+        autoResize();
+
+        // Manejar estado de escritura
+        if (!isTyping && this.value.trim()) {
+            isTyping = true;
+            sendTypingStatus(true);
+        }
+
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(() => {
+            if (isTyping) {
+                isTyping = false;
+                sendTypingStatus(false);
+            }
+        }, 1000);
+    });
+
+    messageInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            if (this.value.trim()) {
+                sendMessage();
+            }
+        }
+    });
+
+    messageForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        if (messageInput.value.trim()) {
+            sendMessage();
+        }
+    });
+
+    // Función para enviar mensaje
+    function sendMessage() {
+        const message = messageInput.value.trim();
+        if (!message) return;
+
+        if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+            chatSocket.send(JSON.stringify({
+                'type': 'chat_message',
+                'message': message
+            }));
+
+            messageInput.value = '';
+            autoResize();
+
+            // Detener indicador de escritura
+            if (isTyping) {
+                isTyping = false;
+                sendTypingStatus(false);
+            }
+        } else {
+            console.error('WebSocket no está conectado');
+            // Fallback: enviar por POST tradicional
+            sendMessageFallback(message);
+        }
+    }
+
+    // Fallback para envío tradicional
+    function sendMessageFallback(message) {
+        fetch(window.location.href, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: `content=${encodeURIComponent(message)}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                messageInput.value = '';
+                autoResize();
+                // Recargar la página para mostrar el mensaje
+                location.reload();
+            }
+        })
+        .catch(error => {
+            console.error('Error enviando mensaje:', error);
+        });
+    }
+
+    // Inicializar WebSocket
+    initWebSocket();
+
+    // Scroll inicial
+    scrollToBottom();
+    {% endif %}
+
+    // Funciones globales
+    window.openChat = function(username) {
+        window.location.href = `/chat/${username}/`;
+    };
+
+    window.insertQuickMessage = function(message) {
+        messageInput.value = message;
+        messageInput.focus();
+        autoResize();
+    };
+
+    // Marcar amigo activo
+    function markActiveChat() {
+        const currentPath = window.location.pathname;
+        const friendItems = document.querySelectorAll('.friend-item');
+
+        friendItems.forEach(item => {
+            const friendUsername = item.dataset.friend;
+            if (currentPath.includes(`/chat/${friendUsername}/`)) {
+                item.classList.add('active');
+            } else {
+                item.classList.remove('active');
+            }
+        });
+    }
+
+    markActiveChat();
+});
+</script>
+{% endblock %}
