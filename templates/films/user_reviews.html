@@ -1,0 +1,163 @@
+{% extends '../base.html' %}
+{% load static %}
+
+{% block title %}Mis Valoraciones - PlaceholderName{% endblock %}
+
+{% block content %}
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow">
+                    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                        <h3 class="mb-0"><i class="fas fa-star me-2"></i>{{ title }}</h3>
+                        <a href="{% url 'profile' %}" class="btn btn-sm btn-outline-light">
+                            <i class="fas fa-user me-1"></i>Volver al Perfil
+                        </a>
+                    </div>
+                    <div class="card-body">
+                        {% if reviews %}
+                            <div class="reviews-list">
+                                {% for review in reviews %}
+                                    <div class="review-item mb-4">
+                                        <div class="row">
+                                            <!-- Póster de la película -->
+                                            <div class="col-md-2 col-sm-3 mb-3 mb-md-0">
+                                                <a href="{% url 'movie_detail' review.movie_id %}">
+                                                    <img src="https://image.tmdb.org/t/p/w200{{ review.poster_path|default:'' }}"
+                                                         alt="{{ review.title }}"
+                                                         class="img-fluid rounded shadow-sm"
+                                                         onerror="this.src='{% static 'img/no-poster.jpg' %}'; this.onerror=null;">
+                                                </a>
+                                            </div>
+
+                                            <!-- Contenido de la reseña -->
+                                            <div class="col-md-10 col-sm-9">
+                                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                                    <h4 class="mb-0">
+                                                        <a href="{% url 'movie_detail' review.movie_id %}"
+                                                           class="text-decoration-none">
+                                                            {{ review.title }}
+                                                        </a>
+                                                    </h4>
+                                                    <span class="badge bg-warning text-dark rating-large">
+                                                    {{ review.rating }} <i class="fas fa-star"></i>
+                                                </span>
+                                                </div>
+
+                                                <p class="text-muted small">
+                                                    <i class="far fa-calendar-alt me-1"></i>Valorada
+                                                    el {{ review.date_rated|date:"d/m/Y H:i" }}
+                                                </p>
+
+                                                {% if review.comment %}
+                                                    <div class="review-content mt-2">
+                                                        <p>{{ review.comment }}</p>
+                                                    </div>
+                                                {% else %}
+                                                    <p class="text-muted fst-italic">No añadiste comentarios a esta
+                                                        valoración.</p>
+                                                {% endif %}
+
+                                                <div class="mt-3">
+                                                    <a href="{% url 'movie_detail' review.movie_id %}#review-form"
+                                                       class="btn btn-sm btn-outline-primary me-2">
+                                                        <i class="fas fa-edit me-1"></i>Editar
+                                                    </a>
+                                                    <a href="{% url 'delete_review' review.id %}"
+                                                       class="btn btn-sm btn-outline-danger">
+                                                        <i class="fas fa-trash-alt me-1"></i>Eliminar
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {% if not forloop.last %}
+                                        <hr>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+
+                            <!-- Paginación -->
+                            {% if is_paginated %}
+                                <div class="d-flex justify-content-center mt-4">
+                                    <nav aria-label="Page navigation">
+                                        <ul class="pagination">
+                                            {% if page_obj.has_previous %}
+                                                <li class="page-item">
+                                                    <a class="page-link" href="?page=1" aria-label="First">
+                                                        <span aria-hidden="true">&laquo;&laquo;</span>
+                                                    </a>
+                                                </li>
+                                                <li class="page-item">
+                                                    <a class="page-link"
+                                                       href="?page={{ page_obj.previous_page_number }}"
+                                                       aria-label="Previous">
+                                                        <span aria-hidden="true">&laquo;</span>
+                                                    </a>
+                                                </li>
+                                            {% endif %}
+
+                                            {% for num in paginator.page_range %}
+                                                {% if page_obj.number == num %}
+                                                    <li class="page-item active"><a class="page-link"
+                                                                                    href="?page={{ num }}">{{ num }}</a>
+                                                    </li>
+                                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                                    <li class="page-item"><a class="page-link"
+                                                                             href="?page={{ num }}">{{ num }}</a></li>
+                                                {% endif %}
+                                            {% endfor %}
+
+                                            {% if page_obj.has_next %}
+                                                <li class="page-item">
+                                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}"
+                                                       aria-label="Next">
+                                                        <span aria-hidden="true">&raquo;</span>
+                                                    </a>
+                                                </li>
+                                                <li class="page-item">
+                                                    <a class="page-link" href="?page={{ paginator.num_pages }}"
+                                                       aria-label="Last">
+                                                        <span aria-hidden="true">&raquo;&raquo;</span>
+                                                    </a>
+                                                </li>
+                                            {% endif %}
+                                        </ul>
+                                    </nav>
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            <div class="text-center py-5">
+                                <i class="far fa-star fa-4x mb-3 text-muted"></i>
+                                <h4 class="text-muted">No has valorado ninguna película todavía.</h4>
+                                <p class="text-muted">Explora nuestro catálogo y valora las películas que hayas
+                                    visto.</p>
+                                <a href="{% url 'index' %}" class="btn btn-primary mt-3">
+                                    <i class="fas fa-film me-2"></i>Explorar Películas
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        // Confirmación para eliminar reseña
+        document.addEventListener('DOMContentLoaded', function () {
+            const deleteButtons = document.querySelectorAll('a[href^="{% url "delete_review" 0 %}'.replace('/0/', '/'));
+
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', function (e) {
+                    if (!confirm('¿Estás seguro de que deseas eliminar esta reseña? Esta acción no se puede deshacer.')) {
+                        e.preventDefault();
+                    }
+                });
+            });
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,315 @@
+{% extends '../base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}{{ movie.title }} - PlaceholderName{% endblock %}
+
+{% block content %}
+    <!-- Movie Banner -->
+    <div class="movie-backdrop"
+         style="background-image: url('https://image.tmdb.org/t/p/original{{ movie.backdrop_path }}');">
+        <div class="backdrop-overlay d-flex align-items-end">
+            <div class="container py-5 text-white">
+                <div class="row align-items-end">
+                    <div class="col-md-3 text-center text-md-start mb-4 mb-md-0">
+                        {% if movie.poster_path %}
+                            <img src="https://image.tmdb.org/t/p/w500{{ movie.poster_path }}"
+                                 class="movie-poster img-fluid"
+                                 alt="{{ movie.title }}">
+                        {% else %}
+                            <div class="bg-dark d-flex justify-content-center align-items-center movie-poster"
+                                 style="width: 100%; height: 400px;">
+                                <i class="fas fa-film fa-5x text-light"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="col-md-9">
+                        <h1 class="movie-title display-4">{{ movie.title }}</h1>
+                        {% if movie.tagline %}
+                            <p class="lead fst-italic">{{ movie.tagline }}</p>
+                        {% endif %}
+                        <div class="d-flex align-items-center mb-3">
+                            <span class="me-3">{{ movie.release_date|slice:":4" }}</span>
+                            <span class="me-3">{{ movie.runtime }} min</span>
+                            <span class="rating-stars">
+                            {{ movie.vote_average|floatformat:1 }} <i class="fas fa-star"></i>
+                            <small class="text-light ms-1">({{ movie.vote_count }} votos)</small>
+                        </span>
+                        </div>
+                        <div class="mb-3">
+                            {% for genre in movie.genres %}
+                                <span class="badge bg-primary genre-badge">{{ genre.name }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Movie Details -->
+    <div class="container py-5">
+        <div class="row gx-5">
+            <!-- Columna izquierda: Sinopsis y Reparto -->
+            <div class="col-lg-8 pe-lg-5">
+                <div class="mb-5">
+                    <h2 class="mb-4">Sinopsis</h2>
+                    <p class="lead">{{ movie.overview }}</p>
+                </div>
+
+                {% if cast %}
+                    <div class="mt-2 mb-5">
+                        <h2 class="mb-4">Reparto principal</h2>
+                        <div class="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-lg-6 g-3">
+                            {% for actor in cast %}
+                                <div class="col">
+                                    <div class="cast-card">
+                                        {% if actor.profile_path %}
+                                            <img src="https://image.tmdb.org/t/p/w185{{ actor.profile_path }}"
+                                                 class="cast-img mb-2" alt="{{ actor.name }}">
+                                        {% else %}
+                                            <div class="bg-light d-flex justify-content-center align-items-center cast-img mb-2">
+                                                <i class="fas fa-user fa-2x text-secondary"></i>
+                                            </div>
+                                        {% endif %}
+                                        <h6 class="mb-0">{{ actor.name }}</h6>
+                                        <small class="text-muted">{{ actor.character }}</small>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Columna derecha: Información y Productoras -->
+            <div class="col-lg-4 ps-lg-5">
+                <div class="card mt-0 movie-info-card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Detalles de la película</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <!-- Información general -->
+                        <div class="p-3 border-bottom">
+                            <h6 class="text-primary mb-3">Información</h6>
+                            <ul class="list-group list-group-flush">
+                                {% if movie.production_countries %}
+                                    <li class="list-group-item bg-transparent px-0">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <strong><i class="fas fa-globe me-2"></i>País:</strong>
+                                            <span>
+                                            {% for country in movie.production_countries %}
+                                                {{ country.name }}{% if not forloop.last %}, {% endif %}
+                                            {% endfor %}
+                                        </span>
+                                        </div>
+                                    </li>
+                                {% endif %}
+                                {% if movie.original_language %}
+                                    <li class="list-group-item bg-transparent px-0">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <strong><i class="fas fa-language me-2"></i>Idioma original:</strong>
+                                            <span>{{ movie.original_language|upper }}</span>
+                                        </div>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+
+                        <!-- Productoras -->
+                        {% if movie.production_companies %}
+                            <div class="p-3">
+                                <h6 class="text-primary mb-3">Productoras</h6>
+                                <ul class="list-group list-group-flush">
+                                    {% for company in movie.production_companies %}
+                                        <li class="list-group-item bg-transparent px-0 d-flex align-items-center">
+                                            <i class="fas fa-building me-2"></i> {{ company.name }}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="card-footer bg-light">
+                        {% if user.is_authenticated %}
+                            <div class="d-flex justify-content-between mb-3">
+                                <form method="post" action="
+
+                                        {% if movie.id in favorite_ids %}{% url 'remove_from_favorites' movie.id %}{% else %}{% url 'add_to_favorites' movie.id %}{% endif %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-outline-danger">
+                                        {% if movie.id in favorite_ids %}
+                                            <i class="fas fa-heart me-2"></i>Eliminar de favoritos
+                                        {% else %}
+                                            <i class="far fa-heart me-2"></i>Añadir a favoritos
+                                        {% endif %}
+                                    </button>
+                                </form>
+                                <form method="post" action="
+
+                                        {% if movie.id in watchlist_ids %}{% url 'remove_from_watchlist' movie.id %}{% else %}{% url 'add_to_watchlist' movie.id %}{% endif %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-outline-primary">
+                                        {% if movie.id in watchlist_ids %}
+                                            <i class="fas fa-bookmark me-2"></i>Eliminar de watchlist
+                                        {% else %}
+                                            <i class="far fa-bookmark me-2"></i>Añadir a watchlist
+                                        {% endif %}
+                                    </button>
+                                </form>
+                            </div>
+                        {% endif %}
+                        <div class="d-grid">
+                            <a href="{% url 'index' %}" class="btn btn-outline-primary">
+                                <i class="fas fa-arrow-left me-2"></i>Volver a películas
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reseñas -->
+        <div class="reviews-section">
+            <h2><i class="fas fa-comments me-2"></i>Reseñas de usuarios</h2>
+
+            {% if reviews %}
+                <div class="reviews-list">
+                    {% for review in reviews %}
+                        <div class="review-item">
+                            <div class="review-header">
+                                <div class="review-user">
+                                    <i class="fas fa-user-circle me-2"></i>{{ review.profile.user.username }}
+                                </div>
+                                <div class="rating-large">
+                                    {{ review.rating }} <i class="fas fa-star"></i>
+                                </div>
+                            </div>
+                            <div class="review-body">
+                                {{ review.comment }}
+                            </div>
+                            <div class="review-date mt-2">
+                                <i class="far fa-clock me-1"></i>{{ review.date_rated|naturaltime }}
+                            </div>
+
+                            {% if user.is_authenticated and review.profile.user == user %}
+                                <!-- Solo se muestra si el usuario es el que escribió la reseña -->
+                                <div class="review-actions">
+                                    <!-- Botón de Editar -->
+                                    <a href="{% url 'edit_review' movie.id %}" class="btn btn-link text-primary">
+                                        <i class="fas fa-edit"></i> Editar
+                                    </a>
+                                    <!-- Botón de Borrar -->
+                                    <form method="post" action="{% url 'delete_review' review.id %}"
+                                          class="d-inline-block"
+                                          onsubmit="return confirm('¿Estás seguro de que quieres eliminar esta reseña?');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-link text-danger">
+                                            <i class="fas fa-trash-alt"></i> Borrar
+                                        </button>
+                                    </form>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="no-reviews-message">
+                    <i class="far fa-comment-dots fa-3x mb-3"></i>
+                    <p>Aún no hay reseñas para esta película. ¡Sé el primero en compartir tu opinión!</p>
+                </div>
+            {% endif %}
+
+            {% if user.is_authenticated %}
+                <div class="review-form-card">
+                    {% if user_review %}
+                        <h3><i class="fas fa-edit me-2"></i>Editar tu reseña</h3>
+                        <form method="post" action="{% url 'edit_review' movie.id %}" class="review-form">
+                            {% csrf_token %}
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="rating-input-group">
+                                        <label for="rating" class="form-label">Tu calificación</label>
+                                        <input type="number" class="form-control rating-input" id="rating" name="rating"
+                                               min="0.5" max="5" step="0.5" value="{{ user_review.rating }}" required>
+                                        <div class="star-icon">
+                                            <i class="fas fa-star"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-9">
+                                    <div class="mb-3">
+                                        <label for="comment" class="form-label">Tu comentario</label>
+                                        <textarea class="form-control" id="comment" name="comment" rows="3"
+                                                  required>{{ user_review.comment }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-end">
+                                <button type="submit" class="btn btn-primary btn-review">
+                                    <i class="fas fa-save me-2"></i>Guardar cambios
+                                </button>
+                            </div>
+                        </form>
+                    {% else %}
+                        <h3><i class="fas fa-star me-2"></i>Deja tu reseña</h3>
+                        <form method="post" action="{% url 'add_review' movie.id %}" class="review-form">
+                            {% csrf_token %}
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="rating-input-group">
+                                        <label for="rating" class="form-label">Tu calificación</label>
+                                        <input type="number" class="form-control rating-input" id="rating" name="rating"
+                                               min="0.5" max="5" step="0.5" required>
+                                        <div class="star-icon">
+                                            <i class="fas fa-star"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-9">
+                                    <div class="mb-3">
+                                        <label for="comment" class="form-label">Tu comentario</label>
+                                        <textarea class="form-control" id="comment" name="comment" rows="3"
+                                                  placeholder="Comparte tu opinión sobre la película..."
+                                                  required></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-end">
+                                <button type="submit" class="btn btn-primary btn-review">
+                                    <i class="fas fa-paper-plane me-2"></i>Publicar reseña
+                                </button>
+                            </div>
+                        </form>
+                    {% endif %}
+                </div>
+            {% else %}
+                <div class="login-prompt">
+                    <p><i class="fas fa-lock me-2"></i>Inicia sesión para dejar tu reseña</p>
+                    <a href="{% url 'login' %}?next={{ request.path }}" class="btn btn-outline-primary login-button">
+                        <i class="fas fa-sign-in-alt me-2"></i>Iniciar sesión
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+
+
+        <!-- Secciones de ancho completo -->
+        <div class="row mt-5">
+            <div class="col-12">
+                {% if trailers %}
+                    <h2 class="mt-5 mb-4"><i class="fas fa-film me-2"></i>Tráilers</h2>
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <div class="ratio ratio-16x9 shadow">
+                                <iframe src="https://www.youtube.com/embed/{{ trailers.0.key }}"
+                                        title="{{ trailers.0.name }}"
+                                        allowfullscreen></iframe>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endblock %}
