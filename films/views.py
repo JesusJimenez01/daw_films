@@ -107,7 +107,7 @@ class MovieDetailView(DetailView):
         context = super().get_context_data(**kwargs)
         movie_id = self.kwargs.get('movie_id')
 
-        # Adult content preference
+        # Contenido adulto
         allow_adult = True
         if self.request.user.is_authenticated:
             allow_adult = self.request.user.profile.show_adult_content
@@ -121,7 +121,7 @@ class MovieDetailView(DetailView):
         trailers = [v for v in videos.get('results', [])
                     if v.get('site') == 'YouTube' and v.get('type') == 'Trailer']
 
-        # Recommendations
+        # Recomendaciones
         recommendations = MovieRequests.get_movie_recommendations(movie_id, allow_adult=allow_adult)
         recommended_movies = recommendations.get('results', [])[:4]
         for movie in recommended_movies:
@@ -215,7 +215,7 @@ class UserReviewsView(ListView):
         """
         reviews = MovieRating.objects.filter(profile=self.request.user.profile).order_by('-date_rated')
 
-        # Enriquecer cada reseña con datos de la API para obtener los pósters
+        # Usar datos de la API para obtener los pósters
         for review in reviews:
             if not hasattr(review, 'poster_path') or not review.poster_path:
                 # Obtener información de la película desde TMDB para conseguir el póster
@@ -340,7 +340,6 @@ def delete_review(request, review_id):
     """
     # Obtener la reseña y verificar que pertenece al usuario actual
     review = get_object_or_404(MovieRating, id=review_id, profile=request.user.profile)
-    movie_id = review.movie_id
     review.delete()
 
     # Redirigir a la página anterior o a la lista de reseñas

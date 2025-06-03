@@ -185,3 +185,7 @@ CHANNEL_LAYERS = {
         },
     },
 }
+
+
+BOT_USERNAME = 'moviebot'
+RASA_URL = 'http://host.docker.internal:5005'
