@@ -3,7 +3,7 @@ name: Deploy to EC2
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:
+  workflow_dispatch: # Permite ejecutar manualmente
 
 jobs:
   deploy:
@@ -20,6 +20,10 @@ jobs:
         chmod 600 ~/.ssh/id_rsa
         ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
+    - name: Upload .env to EC2
+      run: |
+        echo "${{ secrets.EC2_ENV_FILE }}" | ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} 'mkdir -p ~/daw-films && cat > ~/daw-films/.env'
+
     - name: Deploy to EC2
       run: |
         ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
@@ -27,6 +31,7 @@ jobs:
 
           cd /home/${{ secrets.EC2_USER }}
 
+          # Clonar si no existe
           if [ ! -d daw-films ]; then
             echo "Clonando repositorio..."
             git clone https://github.com/JesusJimenez01/daw_films.git daw-films
@@ -38,32 +43,26 @@ jobs:
           git status
           git remote -v
 
-          if [ -f .env ]; then
-            cp .env .env.backup
-          fi
-
+          # Apagar contenedores antes de desplegar
           echo "Apagando contenedores antiguos..."
-          docker compose down --remove-orphans
+          docker compose down
 
-          echo "Actualizando código..."
+          # Actualizar desde main
           git reset --hard
           git pull origin main
 
-          if [ -f .env.backup ]; then
-            mv .env.backup .env
-          fi
-
-          echo "Ejecutando despliegue..."
+          # Ejecutar script de despliegue
           chmod +x deploy.sh
           ./deploy.sh
 
-          echo "Limpiando recursos Docker no utilizados..."
-          docker system prune -af
+          # Limpiar imágenes no usadas
+          docker system prune -f
         EOF
 
     - name: Health Check
       run: |
         echo "Esperando a que la app levante..."
         sleep 30
-        curl -f https://dawfilms.jesus-jimenez.tech || exit 1
+        curl -f http://dawfilms.jesus-jimenez.tech || exit 1
+
 
