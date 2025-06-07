@@ -35,6 +35,7 @@ ALLOWED_HOSTS = [
     'dawfilms.jesus-jimenez.tech',
     'localhost',
     '127.0.0.1',
+    '13.217.124.165',
 ]
 
 
