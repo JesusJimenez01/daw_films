@@ -35,7 +35,7 @@ jobs:
           # Clonar si no es un repo Git válido
           if [ ! -d daw_films/.git ]; then
             echo "⚠️ Clonando repositorio porque no es un repo Git"
-            rm -rf daw_films
+            sudo rm -rf daw_films
             git clone https://github.com/JesusJimenez01/daw_films.git daw_films
           fi
 
