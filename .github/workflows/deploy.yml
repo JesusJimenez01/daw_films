@@ -3,7 +3,7 @@ name: Deploy to EC2
 on:
   push:
     branches: [ main ]
-  workflow_dispatch: # Permite ejecutar manualmente
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -27,15 +27,14 @@ jobs:
     - name: Deploy to EC2
       run: |
         export EC2_USER=${{ secrets.EC2_USER }}
-        ssh -i ~/.ssh/id_rsa $EC2_USER@${{ secrets.EC2_HOST }} << 'EOF'
+        ssh -i ~/.ssh/id_rsa $EC2_USER@${{ secrets.EC2_HOST }} << EOF
           set -e
 
-          cd /home/$EC2_USER
+          cd \$HOME
 
-          # Clonar si no es un repo Git válido
           if [ ! -d daw_films/.git ]; then
             echo "⚠️ Clonando repositorio porque no es un repo Git"
-            sudo rm -rf daw_films
+            rm -rf daw_films
             git clone https://github.com/JesusJimenez01/daw_films.git daw_films
           fi
 
@@ -45,19 +44,15 @@ jobs:
           git status
           git remote -v
 
-          # Apagar contenedores antiguos
           echo "Apagando contenedores antiguos..."
           docker compose down || true
 
-          # Obtener últimos cambios
           git reset --hard
           git pull origin main
 
-          # Ejecutar script de despliegue
           chmod +x deploy.sh
           ./deploy.sh
 
-          # Limpiar imágenes no utilizadas
           docker system prune -f
         EOF
 
@@ -74,6 +69,7 @@ jobs:
         done
         echo "❌ La app no respondió a tiempo"
         exit 1
+
 
 
 
