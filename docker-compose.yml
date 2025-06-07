@@ -9,33 +9,39 @@ services:
       - static_volume:/app/staticfiles
       - media_volume:/app/media
     environment:
-      - DEBUG=True
+      - DEBUG=False
       - DJANGO_SETTINGS_MODULE=daw_films.settings
     env_file:
       - .env
     depends_on:
       - db
       - redis
-    command: gunicorn daw_films.asgi:application --bind 0.0.0.0:8000 -k uvicorn.workers.UvicornWorker
+    command: gunicorn daw_films.asgi:application --bind 0.0.0.0:8000 -k uvicorn.workers.UvicornWorker --workers 2
     restart: unless-stopped
+    # No exponemos el puerto directamente, solo nginx debe acceder
+    expose:
+      - "8000"
 
   nginx:
     build:
       context: .
       dockerfile: nginx.Dockerfile
+    container_name: nginx_proxy
     ports:
       - "80:80"
+      - "443:443"  # Para SSL
     volumes:
-      - static_volume:/app/staticfiles
-      - media_volume:/app/media
+      - static_volume:/app/staticfiles:ro
+      - media_volume:/app/media:ro
+      # Volumen para certificados SSL
+      - ./ssl:/etc/nginx/ssl:ro
     depends_on:
       - web
+    restart: unless-stopped
 
   db:
     image: postgres:16
     container_name: postgres_db
-    ports:
-      - "5432:5432"
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -43,13 +49,17 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
+    # Solo exponemos localmente para debugging si es necesario
+    ports:
+      - "127.0.0.1:5432:5432"
 
   redis:
     image: redis:7
-    container_name: redis
-    ports:
-      - "6379:6379"
+    container_name: redis_cache
     restart: unless-stopped
+    # Solo exponemos localmente
+    ports:
+      - "127.0.0.1:6379:6379"
 
 volumes:
   postgres_data:

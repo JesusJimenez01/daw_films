@@ -31,7 +31,11 @@ SECRET_KEY = 'django-insecure--+-$yj(q18)(gdwi_j+ja3ci_w@!nzebj1kc$d0bwg%=&40yi6
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'dawfilms.jesus-jimenez.tech',
+    'localhost',
+    '127.0.0.1',
+]
 
 
 # Application definition
@@ -189,3 +193,11 @@ CHANNEL_LAYERS = {
 
 BOT_USERNAME = 'moviebot'
 RASA_URL = 'http://host.docker.internal:5005'
+
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = False  # Nginx se encargará del SSL
+
+    # Headers de seguridad
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
