@@ -12,4 +12,4 @@ docker compose exec web python manage.py makemigrations
 echo "Ejecutando migrate..."
 docker compose exec web python manage.py migrate
 
-echo "Listo"
+echo "Listo!"
