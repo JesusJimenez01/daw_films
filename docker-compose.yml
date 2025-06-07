@@ -34,7 +34,7 @@ services:
       - static_volume:/app/staticfiles:ro
       - media_volume:/app/media:ro
       # Volumen para certificados SSL
-      - ./ssl:/etc/nginx/ssl:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       - web
     restart: unless-stopped
