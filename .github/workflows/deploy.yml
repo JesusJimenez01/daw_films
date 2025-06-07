@@ -1,0 +1,53 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch: # Permite ejecutar manualmente
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup SSH
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+    - name: Deploy to EC2
+      run: |
+        ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+          # Navegar al directorio del proyecto
+          cd /home/${{ secrets.EC2_USER }}/daw-films
+          
+          # Hacer backup de archivos sensibles si existen
+          if [ -f .env ]; then
+            cp .env .env.backup
+          fi
+          
+          # Actualizar código desde GitHub
+          git pull origin main
+          
+          # Restaurar archivo .env si existe backup
+          if [ -f .env.backup ]; then
+            mv .env.backup .env
+          fi
+          
+          # Ejecutar script de despliegue
+          chmod +x deploy.sh
+          ./deploy.sh
+          
+          # Limpiar imágenes Docker no utilizadas para ahorrar espacio
+          docker system prune -f
+        EOF
+
+    - name: Health Check
+      run: |
+        sleep 30 # Esperar a que los servicios se levanten
+        curl -f http://dawfilms.jesus-jimenez.tech || exit 1
