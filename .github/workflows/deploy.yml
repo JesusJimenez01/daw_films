@@ -34,7 +34,7 @@ jobs:
           # Clonar si no existe
           if [ ! -d daw-films ]; then
             echo "Clonando repositorio..."
-            git clone https://github.com/JesusJimenez01/daw_films.git daw-films
+            git clone https://github.com/JesusJimenez01/daw_films.git daw_films
           fi
 
           cd daw-films
