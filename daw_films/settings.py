@@ -36,6 +36,7 @@ ALLOWED_HOSTS = [
     'localhost',
     '127.0.0.1',
     '13.217.124.165',
+    'jesus-jimenez.tech',
 ]
 
 
