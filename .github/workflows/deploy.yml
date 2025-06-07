@@ -3,7 +3,7 @@ name: Deploy to EC2
 on:
   push:
     branches: [ main ]
-  workflow_dispatch: # Permite ejecutar manualmente
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -23,31 +23,47 @@ jobs:
     - name: Deploy to EC2
       run: |
         ssh -i ~/.ssh/id_rsa ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
-          # Navegar al directorio del proyecto
-          cd /home/${{ secrets.EC2_USER }}/daw-films
-          
-          # Hacer backup de archivos sensibles si existen
+          set -e
+
+          cd /home/${{ secrets.EC2_USER }}
+
+          if [ ! -d daw-films ]; then
+            echo "Clonando repositorio..."
+            git clone https://github.com/JesusJimenez01/daw_films.git daw-films
+          fi
+
+          cd daw-films
+
+          echo "Estado Git actual:"
+          git status
+          git remote -v
+
           if [ -f .env ]; then
             cp .env .env.backup
           fi
-          
-          # Actualizar código desde GitHub
+
+          echo "Apagando contenedores antiguos..."
+          docker compose down --remove-orphans
+
+          echo "Actualizando código..."
+          git reset --hard
           git pull origin main
-          
-          # Restaurar archivo .env si existe backup
+
           if [ -f .env.backup ]; then
             mv .env.backup .env
           fi
-          
-          # Ejecutar script de despliegue
+
+          echo "Ejecutando despliegue..."
           chmod +x deploy.sh
           ./deploy.sh
-          
-          # Limpiar imágenes Docker no utilizadas para ahorrar espacio
-          docker system prune -f
+
+          echo "Limpiando recursos Docker no utilizados..."
+          docker system prune -af
         EOF
 
     - name: Health Check
       run: |
-        sleep 30 # Esperar a que los servicios se levanten
-        curl -f http://dawfilms.jesus-jimenez.tech || exit 1
+        echo "Esperando a que la app levante..."
+        sleep 30
+        curl -f https://dawfilms.jesus-jimenez.tech || exit 1
+
