@@ -16,23 +16,36 @@ class MovieListView(ListView):
     template_name = 'films/index.html'
     context_object_name = 'movies'
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._api_data = None  # Cache para evitar llamadas duplicadas a la API
+
+    def get_api_data(self):
+        """
+        Obtiene los datos de la API una sola vez y los cachea
+        """
+        if self._api_data is None:
+            search_query = self.request.GET.get('search', '')
+            page_number = int(self.request.GET.get('page', 1))
+
+            # Obtener la preferencia de contenido adulto del usuario
+            allow_adult = False  # Por defecto False para usuarios anónimos
+            if self.request.user.is_authenticated:
+                allow_adult = self.request.user.profile.show_adult_content
+
+            # Obtener películas (búsqueda o populares) con filtrado de contenido adulto
+            if search_query:
+                self._api_data = MovieRequests.search_movies(search_query, page_number, allow_adult=allow_adult)
+            else:
+                self._api_data = MovieRequests.get_popular_movies(page_number, allow_adult=allow_adult)
+
+        return self._api_data or {}
+
     def get_queryset(self):
         """
         Obtiene las películas desde la API
         """
-        search_query = self.request.GET.get('search', '')
-        page_number = self.request.GET.get('page', 1)
-
-        # Obtener la preferencia de contenido adulto del usuario
-        allow_adult = True
-        if self.request.user.is_authenticated:
-            allow_adult = self.request.user.profile.show_adult_content
-
-        # Obtener películas (búsqueda o populares) con filtrado de contenido adulto
-        if search_query:
-            data = MovieRequests.search_movies(search_query, page_number, allow_adult=allow_adult)
-        else:
-            data = MovieRequests.get_popular_movies(page_number, allow_adult=allow_adult)
+        data = self.get_api_data()
 
         # Obtener lista de películas o lista vacía si hay error
         movies = data.get('results', [])
@@ -49,14 +62,8 @@ class MovieListView(ListView):
         search_query = self.request.GET.get('search', '')
         page_number = int(self.request.GET.get('page', 1))
 
-        allow_adult = False
-        if self.request.user.is_authenticated:
-            allow_adult = self.request.user.profile.show_adult_content
-
-        if search_query:
-            data = MovieRequests.search_movies(search_query, page_number, allow_adult=allow_adult)
-        else:
-            data = MovieRequests.get_popular_movies(page_number, allow_adult=allow_adult)
+        # Usar los datos cacheados en lugar de hacer otra llamada a la API
+        data = self.get_api_data()
 
         total_pages = data.get('total_pages', 1)
         page_range = range(max(1, page_number - 2), min(total_pages, page_number + 3))
@@ -363,7 +370,7 @@ def add_to_watchlist(request, movie_id):
             'poster_path': movie.get('poster_path')
         }
     )
-    
+
     # Añadir mensaje según el resultado de la operación
     if created:
         messages.success(request, f'"{movie.get("title", "Película")}" ha sido añadida a tu watchlist')
